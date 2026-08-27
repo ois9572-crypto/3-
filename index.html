@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3초 기억 🧠</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f6f2;color:#172019;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;min-height:100vh;display:flex;justify-content:center;align-items:center}.wrap{width:min(94vw,560px)}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.brand{font-weight:900;font-size:20px}.login{background:none;border:1px solid #dfe5dc;border-radius:10px;padding:8px 12px;color:#667068}.card{background:#fff;border:1px solid #e3e8e0;border-radius:28px;padding:25px;box-shadow:0 22px 65px #17201910}.center{text-align:center}.eyebrow{font-size:12px;color:#6f8769;font-weight:900;letter-spacing:.06em}.title{font-size:38px;letter-spacing:-.06em;margin:8px 0}.desc{color:#7b837d;line-height:1.65;margin:0 0 24px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}.stat{background:#f7f9f5;border-radius:15px;padding:12px}.stat span{font-size:11px;color:#8a918b}.stat b{display:block;font-size:20px;margin-top:2px}.board{min-height:330px;background:#f0f4ed;border-radius:20px;display:flex;align-items:center;justify-content:center;padding:20px}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:min(100%,390px)}.cell{aspect-ratio:1;border:0;border-radius:14px;background:#fff;font-size:30px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px #1720190a;cursor:pointer}.position-cell{font-size:26px;color:#263329}.start,.mainbtn{margin-top:18px;width:100%;border:0;border-radius:13px;padding:14px;background:#263329;color:white;font-weight:850}.choices{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:18px}.choice{width:100%;border:1px solid #e1e6df;background:#fff;border-radius:12px;padding:16px;font-size:30px;min-height:68px}.choice:hover{background:#f5f8f3}.modebox{margin-top:22px;padding-top:20px;border-top:1px solid #e7ebe5}.modebox h3{margin:0 0 10px}.modes{display:grid;gap:9px}.mode{display:flex;justify-content:space-between;align-items:center;border:1px solid #e3e8e0;border-radius:14px;padding:14px}.mode small{display:block;color:#7d857e;margin-top:3px}.price{font-weight:900}.buy{background:#263329;color:#fff;border:0;border-radius:10px;padding:9px 12px;font-weight:800}.locked{color:#7c847e;font-size:12px}.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);opacity:0;background:#263329;color:white;padding:12px 17px;border-radius:12px;font-size:13px;transition:.25s}.toast.show{opacity:1;transform:translate(-50%,0)}.hidden{display:none!important}@media(max-width:500px){.card{padding:18px}.board{min-height:290px}.grid{gap:7px}.cell{font-size:24px}.title{font-size:34px}}
+
+/* Compact game viewport: keep the whole play/choice area visible without page scrolling */
+body.game-active { overflow: hidden; }
+body.game-active .wrap { min-height: 100vh; display:flex; align-items:center; padding-top:12px; padding-bottom:12px; }
+body.game-active .wrap > .card { width:100%; max-height:calc(100vh - 24px); overflow:hidden; display:flex; flex-direction:column; justify-content:center; }
+body.game-active .board { min-height:0 !important; height:min(52vh,430px); max-height:430px; }
+body.game-active .grid { height:100%; grid-auto-rows:1fr; }
+body.game-active .choices { flex-shrink:0; max-height:30vh; overflow:hidden; }
+body.game-active .choices .choice { min-height:44px; padding:10px 8px; }
+@media(max-width:500px){
+  body.game-active .wrap { padding:8px; }
+  body.game-active .wrap > .card { max-height:calc(100vh - 16px); padding:14px; }
+  body.game-active .board { height:min(48vh,360px); }
+  body.game-active .grid { gap:6px; }
+  body.game-active .cell { font-size:24px; }
+  body.game-active .choices { gap:7px; }
+  body.game-active .choices .choice { min-height:42px; padding:8px 6px; font-size:15px; }
+  body.game-active .title { font-size:30px; margin:8px 0; }
+  body.game-active .desc { margin:5px 0 8px; }
+}
+
+
+/* Game screen layout fix: keep the game card centered and prevent header elements
+   (3초 기억 / 로그인) from being squeezed beside the game board. */
+body.game-active .wrap { display:block; min-height:100vh; padding:12px 0; }
+body.game-active .top { display:none; }
+body.game-active .wrap > .card { width:100%; max-width:900px; margin:0 auto; box-sizing:border-box; }
+
+
+/* FINAL GAME VIEWPORT FIX */
+body.game-active { overflow:hidden; }
+body.game-active .wrap {
+  height:100dvh; min-height:0; box-sizing:border-box;
+  padding:8px; overflow:hidden;
+}
+body.game-active .wrap > .card {
+  height:calc(100dvh - 16px); max-height:none;
+  overflow:hidden; box-sizing:border-box;
+  padding:12px 14px;
+}
+body.game-active .board {
+  height:min(40dvh,300px); min-height:0 !important;
+  padding:8px; flex:none;
+}
+body.game-active .grid {
+  width:min(100%,40dvh); height:100%;
+  gap:5px; grid-auto-rows:1fr;
+}
+body.game-active .cell { font-size:clamp(16px,5vw,26px); }
+body.game-active .choices {
+  margin-top:8px; gap:6px; max-height:none; flex:none;
+}
+body.game-active .choice {
+  min-height:44px; padding:7px 5px; font-size:clamp(20px,5vw,28px);
+}
+body.game-active .title { font-size:clamp(26px,7vw,34px); margin:4px 0; }
+body.game-active .desc { margin:2px 0 6px; }
+body.game-active .mainbtn { margin-top:8px; padding:11px; }
+@media(max-width:500px){
+  body.game-active .wrap > .card { padding:10px 12px; }
+  body.game-active .board { height:38dvh; }
+  body.game-active .grid { width:min(100%,38dvh); gap:4px; }
+  body.game-active .choice { min-height:42px; padding:6px 4px; }
+  body.game-active .mainbtn { margin-top:7px; padding:10px; }
+}
+
+
+/* FINAL: prevent the 5x5 board itself from clipping the last row */
+body.game-active .board {
+  height:250px !important;
+  min-height:250px !important;
+  max-height:250px !important;
+  padding:6px !important;
+}
+body.game-active .grid {
+  width:250px !important;
+  height:250px !important;
+  max-width:100%;
+  max-height:100%;
+  gap:5px !important;
+}
+body.game-active .cell {
+  min-width:0;
+  min-height:0;
+  font-size:24px;
+}
+body.game-active .choices {
+  margin-top:7px !important;
+  gap:6px !important;
+}
+body.game-active .choice {
+  min-height:0 !important;
+  height:54px;
+  padding:4px !important;
+  font-size:25px !important;
+}
+@media (max-width:500px) {
+  body.game-active .board {
+    height:235px !important;
+    min-height:235px !important;
+    max-height:235px !important;
+  }
+  body.game-active .grid {
+    width:235px !important;
+    height:235px !important;
+    gap:4px !important;
+  }
+  body.game-active .cell { font-size:22px; }
+  body.game-active .choice {
+    height:48px;
+    font-size:23px !important;
+  }
+}
+
+
+body.game-active .choices.choices-3 { grid-template-columns:repeat(3,1fr); }
+body.game-active .choices.choices-4 { grid-template-columns:repeat(4,1fr); }
+
+<style>
+#rankTotal{
+  display:block;
+  margin-top:2px;
+  font-size:11px;
+  font-weight:500;
+  color:#7b837d;
+}
+</style>
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><div class="brand">🧠 3초 기억</div><button id="loginBtn" class="login" onclick="loginWithGoogle()">로그인</button></div>
+<div class="card">
+<div id="home" class="center">
+<div class="eyebrow">MEMORY GAME</div><h1 class="title">3초 동안 기억하세요.</h1>
+<p class="desc">잠깐 보여주는 이모지를 기억하고<br>사라진 뒤 정답을 골라보세요.</p>
+<div class="stats" style="grid-template-columns:repeat(3,1fr)">
+<div class="stat"><span>최고 단계</span><b id="best">1</b></div>
+<div class="stat">
+  <span>현재 순위</span>
+  <b id="rank">로그인</b>
+  <small id="rankTotal"></small>
+</div>
+<div class="stat"><span>플레이</span><b id="plays">0</b></div>
+</div><div style="margin:0 0 16px;padding:15px;border-radius:14px;background:#f7f9f5;text-align:center">
+  <div style="font-size:12px;color:#7b837d;font-weight:700;margin-bottom:3px">내 부활권</div>
+  <div style="font-size:22px;font-weight:900;color:#263329">🛡️ <b id="reviveCount">1</b>개</div>
+</div>
+<div style="margin:0 0 16px;padding:14px 15px;border-radius:14px;background:#f7f9f5;text-align:center">
+  <b>로그인하고 기록을 남겨보세요.</b>
+  <div style="font-size:13px;color:#7b837d;line-height:1.6;margin-top:5px">
+    시즌 리그에 참가해 내 순위를 확인하고,<br>
+    🏆 순위권에 오르면 특별한 선물까지!
+  </div>
+</div>
+<div style="margin:0 0 16px;padding:15px;border-radius:14px;background:#f7f9f5;text-align:left">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <b>🛡️ 부활권 구매</b><span style="font-size:12px;color:#7b837d">로그인 후 구매</span>
+  </div>
+  <div class="shopgrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+    <button class="buy" onclick="buyRevive(1)">1개 · 550원</button>
+    <button class="buy" onclick="buyRevive(3)">3개 · 1,490원</button>
+    <button class="buy" onclick="buyRevive(5)">5개 · 2,190원 ⭐</button>
+    <button class="buy" onclick="buyRevive(10)">10개 · 3,990원</button>
+  </div>
+</div>
+<button class="start" type="button" onclick="startGame()">게임 시작</button>
+
+</div>
+
+<div id="game" class="hidden">
+<div class="center"><div class="eyebrow" id="phase">LEVEL 1</div><h2 class="title" id="levelTitle">집중하세요</h2><div id="memoryTimer" style="font-size:30px;font-weight:900;color:#263329;margin:-8px 0 6px">3.0</div><p class="desc" id="instruction">3초 동안 기억하세요.</p></div>
+<div class="board"><div id="grid" class="grid"></div></div>
+<div id="choices" class="choices hidden"></div>
+<button class="mainbtn" onclick="backHome()">그만하기</button>
+</div>
+
+<div id="result" class="hidden center">
+<div class="eyebrow">RESULT</div><h2 class="title">🧠 결과</h2><p class="desc" id="resultText"></p><div id="reviveArea"></div><button class="mainbtn" onclick="startGame()">다시 도전</button><button class="mainbtn" style="background:#e8f1e4;color:#52704b" onclick="backHome()">메인으로</button>
+</div>
+</div>
+</div>
+<div id="toast" class="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://upmmjwdcvbbnveqvzmba.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_5ehzkSMJlwpT5ngz0AQKPg_M-30zgPB';
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+function show(id){
+ const ids=['home','game','result'];
+ ids.forEach(x=>{
+   const el=document.getElementById(x);
+   if(el) el.classList.toggle('hidden',x!==id);
+ });
+}
+
+const emojis=['🍎','🍌','🍇','🍉','🍓','🍒','🥝','🍋','🥑','🍕','🍔','🍩','🚗','🚲','✈️','🐶','🐱','🐸','🦊','🐼','⭐','🌙','☀️','🌈','🎈','⚽','🎵','❤️','🍀','🌸'];
+let level=1,seq=[],answer=null,score=0,answerTimer=null,answerDeadline=0,memoryTimer=null,memoryDeadline=0,usedRevive=false,revives=Number(localStorage.getItem('memoryRevives')||1),plays=Number(localStorage.getItem('memoryPlays')||0),best=Number(localStorage.getItem('memoryBest')||1);
+document.getElementById('best').textContent=best;document.getElementById('plays').textContent=plays;document.getElementById('reviveCount').textContent=revives;
+function toast(m){let t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700)}
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+
+function startGame(){
+ clearInterval(answerTimer);
+ clearInterval(memoryTimer);
+ level=1;
+ score=0;
+ usedRevive=false;
+ document.body.classList.add('game-active');
+ plays++;
+ localStorage.setItem('memoryPlays',plays);
+ const playsEl=document.getElementById('plays');
+ if(playsEl) playsEl.textContent=plays;
+ document.getElementById('home').classList.add('hidden');
+ document.getElementById('game').classList.remove('hidden');
+ document.getElementById('result').classList.add('hidden');
+ nextRound();
+}
+
+function backHome(){
+ clearInterval(answerTimer);
+ clearInterval(memoryTimer);
+ document.body.classList.remove('game-active');
+ show('home');
+}
+
+function nextRound(){
+ document.getElementById('phase').textContent='LEVEL '+level;
+ document.getElementById('levelTitle').textContent='집중하세요';
+ document.getElementById('instruction').textContent='3초 동안 기억하세요.';
+ const memoryCount=Math.min(4+level,25);
+ seq=shuffle(emojis).slice(0,memoryCount);
+ answer=seq[Math.floor(Math.random()*seq.length)];
+
+ const grid=document.getElementById('grid');
+ grid.innerHTML='';
+ const cells=[...seq];
+ while(cells.length<25) cells.push('');
+ shuffle(cells).forEach(e=>{
+   const d=document.createElement('button');
+   d.className='cell';
+   d.textContent=e;
+   grid.appendChild(d);
+ });
+
+ document.getElementById('choices').classList.add('hidden');
+ clearInterval(answerTimer);
+ clearInterval(memoryTimer);
+
+ const memoryEl=document.getElementById('memoryTimer');
+ memoryEl.textContent='3.0';
+ memoryDeadline=performance.now()+3000;
+ memoryTimer=setInterval(()=>{
+   const left=Math.max(0,(memoryDeadline-performance.now())/1000);
+   memoryEl.textContent=left.toFixed(1);
+   if(left<=0){
+     clearInterval(memoryTimer);
+     memoryEl.textContent='0.0';
+     hideMemory();
+   }
+ },50);
+}
+
+function hideMemory(){
+ document.getElementById('levelTitle').textContent='방금 본 그림은?';
+ document.getElementById('instruction').textContent='방금 본 것 중 하나를 골라보세요.';
+ document.querySelectorAll('.cell').forEach(c=>c.textContent='');
+ const choices=document.getElementById('choices');choices.innerHTML='';
+ choices.classList.remove('choices-3','choices-4');
+ const choiceCount = Math.min(4 + Math.floor((level - 1) / 3), 13);
+ if(choiceCount>=10) choices.classList.add('choices-4');
+ else if(choiceCount>=7) choices.classList.add('choices-3');
+ const distractors = shuffle(emojis.filter(e => !seq.includes(e))).slice(0, choiceCount - 1);
+ const options = shuffle([answer, ...distractors]);
+ options.forEach(e => {
+   let b = document.createElement('button');
+   b.className = 'choice';
+   b.textContent = e;
+   b.onclick = () => choose(e);
+   choices.appendChild(b);
+ });
+ choices.classList.remove('hidden');
+ startAnswerTimer();
+}
+function startAnswerTimer(){
+ clearInterval(answerTimer);
+ answerDeadline=performance.now()+3000;
+ const timerEl=document.getElementById('memoryTimer');
+ timerEl.textContent='3.0';
+ document.getElementById('instruction').textContent='3초 안에 선택하세요.';
+ answerTimer=setInterval(()=>{
+   const left=Math.max(0,(answerDeadline-performance.now())/1000);
+   timerEl.textContent=left.toFixed(1);
+   if(left<=0){
+     clearInterval(answerTimer);
+     timerEl.textContent='0.0';
+     endGame(true);
+   }
+ },50);
+}
+function choose(e){
+ clearInterval(answerTimer);
+ if(e===answer){score+=level;level++;if(level>best){best=level;localStorage.setItem('memoryBest',best);document.getElementById('best').textContent=best}toast('🎉 정답! 다음 단계');setTimeout(nextRound,450)}
+ else endGame();
+}
+async function loadUserGameData(session){
+ try{
+   const rankEl=document.getElementById('rank');
+   if(!session?.user){
+     if(rankEl) rankEl.textContent='로그인';
+     return;
+   }
+
+   const {data:season,error:seasonError}=await supabaseClient
+     .from('seasons')
+     .select('id')
+     .eq('is_active',true)
+     .order('starts_at',{ascending:false})
+     .limit(1)
+     .maybeSingle();
+
+   if(seasonError || !season){
+     if(rankEl) rankEl.textContent='-';
+     return;
+   }
+
+   const {data:rows,error}=await supabaseClient
+     .from('season_participants')
+     .select('user_id,best_level,best_score,best_achieved_at,plays')
+     .eq('season_id',season.id);
+
+   if(error) throw error;
+
+   const sorted=(rows||[]).slice().sort((a,b)=>{
+     if((b.best_level||0)!==(a.best_level||0)) return (b.best_level||0)-(a.best_level||0);
+     if((b.best_score||0)!==(a.best_score||0)) return (b.best_score||0)-(a.best_score||0);
+     const at=Date.parse(a.best_achieved_at||'9999-12-31T23:59:59Z');
+     const bt=Date.parse(b.best_achieved_at||'9999-12-31T23:59:59Z');
+     return at-bt;
+   });
+
+   const idx=sorted.findIndex(r=>r.user_id===session.user.id);
+   const rankTotalEl=document.getElementById('rankTotal');
+   if(idx>=0){
+     const rankNum=idx+1;
+     const medal=rankNum===1?'🥇 ':rankNum===2?'🥈 ':rankNum===3?'🥉 ':'';
+     if(rankEl) rankEl.textContent=`${medal}${rankNum}위`;
+     if(rankTotalEl) rankTotalEl.textContent=`${sorted.length.toLocaleString()}명 중`;
+   }else{
+     if(rankEl) rankEl.textContent='-';
+     if(rankTotalEl) rankTotalEl.textContent='';
+   }
+
+   const me=idx>=0 ? sorted[idx] : null;
+   if(me){
+     best=Math.max(best||1,me.best_level||1);
+     plays=Math.max(plays||0,me.plays||0);
+     localStorage.setItem('memoryBest',best);
+     localStorage.setItem('memoryPlays',plays);
+     const bestEl=document.getElementById('best');
+     const playsEl=document.getElementById('plays');
+     if(bestEl) bestEl.textContent=best;
+     if(playsEl) playsEl.textContent=plays;
+   }
+ }catch(err){
+   console.warn('순위/기록 불러오기 실패:',err);
+   const rankEl=document.getElementById('rank');
+   if(rankEl) rankEl.textContent='-';
+ }
+}
+
+async function saveGameRecord(){
+ try{
+   const {data:{session}}=await supabaseClient.auth.getSession();
+   if(!session?.user) return;
+
+   const {data:season,error:seasonError}=await supabaseClient
+     .from('seasons')
+     .select('id')
+     .eq('is_active',true)
+     .order('starts_at',{ascending:false})
+     .limit(1)
+     .maybeSingle();
+
+   if(seasonError || !season) return;
+
+   const {data:existing,error:existingError}=await supabaseClient
+     .from('season_participants')
+     .select('best_level,best_score,plays')
+     .eq('season_id',season.id)
+     .eq('user_id',session.user.id)
+     .maybeSingle();
+
+   if(existingError && existingError.code!=='PGRST116') return;
+
+   const record={
+     season_id:season.id,
+     user_id:session.user.id,
+     best_level:Math.max(existing?.best_level||1, best||1, level||1),
+     best_score:Math.max(existing?.best_score||0, score||0),
+     plays:Math.max(existing?.plays||0, plays||0),
+     best_achieved_at:new Date().toISOString()
+   };
+
+   const {error}=await supabaseClient
+     .from('season_participants')
+     .upsert(record,{onConflict:'season_id,user_id'});
+
+   if(error) console.warn('게임 기록 저장 실패:',error.message);
+   else await loadUserGameData(session);
+ }catch(err){
+   console.warn('게임 기록 저장 오류:',err);
+ }
+}
+
+function endGame(timeout=false){
+ saveGameRecord();
+ document.body.classList.remove('game-active');
+ clearInterval(answerTimer);clearInterval(memoryTimer);
+ show('result');
+ const reason = timeout ? '⏰ 시간 초과!' : '❌ 틀렸어요!';
+ document.getElementById('resultText').innerHTML =
+ `${reason}<br><br>현재 <b>Lv.${level}</b>에서 종료되었습니다.<br>이번 점수 <b>${score}점</b>`;
+ const area=document.getElementById('reviveArea');
+ if(revives>0){
+   area.innerHTML=`<div style="margin:18px 0;padding:18px;border-radius:16px;background:#f7f9f5">
+   <div style="font-size:24px">🛡️</div>
+   <b>부활권을 사용하시겠어요?</b>
+   <div style="font-size:13px;color:#7b837d;margin:7px 0 13px">현재 LEVEL ${level}에서 다시 도전할 수 있어요.</div>
+   <button class="mainbtn" style="margin-top:0" onclick="revive()">부활하기 · 🛡️ 1개</button>
+   </div>`;
+ }else{
+   area.innerHTML=`<div style="margin:18px 0;padding:18px;border-radius:16px;background:#f7f9f5">
+   <div style="font-size:24px">🛡️</div>
+   <b>부활권이 없습니다.</b>
+   <div style="font-size:13px;color:#7b837d;margin:7px 0 13px">부활권을 구매하면 지금 탈락한 LEVEL ${level}에서 바로 다시 도전할 수 있어요.</div>
+   <button class="mainbtn" style="margin-top:0" onclick="buyRevive()">🛡️ 부활권 구매 · 550원</button>
+   </div>`;
+ }
+}
+
+function revive(){
+ if(revives<=0) return;
+ revives--;
+ localStorage.setItem('memoryRevives',revives);
+ document.getElementById('reviveCount').textContent=revives;
+ document.body.classList.add('game-active');
+ document.getElementById('home').classList.add('hidden');
+ document.getElementById('result').classList.add('hidden');
+ document.getElementById('game').classList.remove('hidden');
+ document.getElementById('phase').textContent='LEVEL '+level;
+ nextRound();
+}
+
+async function buyRevive(quantity=1){
+ const {data:{session}}=await supabaseClient.auth.getSession();
+ if(!session){
+   toast('부활권 구매는 Google 로그인 후 이용할 수 있어요.');
+   loginWithGoogle();
+   return;
+ }
+
+ const products={
+   1:{amount:550,name:'부활권 1개'},
+   3:{amount:1490,name:'부활권 3개'},
+   5:{amount:2190,name:'부활권 5개'},
+   10:{amount:3990,name:'부활권 10개'}
+ };
+ const product=products[quantity]||products[1];
+
+ const area=document.getElementById('reviveArea');
+ area.innerHTML=`<div id="paymentBox" style="margin:18px 0;padding:20px;border-radius:16px;background:#f7f9f5;border:1px solid #e3e8e0">
+   <div style="font-size:12px;color:#7b837d;font-weight:700;margin-bottom:6px">PAYMENT</div>
+   <b style="font-size:20px">${product.name}</b>
+   <div style="font-size:26px;font-weight:900;margin:8px 0 14px">₩${product.amount.toLocaleString()}</div>
+   <div style="padding:18px 12px;border-radius:12px;background:#fff;border:1px dashed #cfd7ce;color:#8a928c;font-size:13px;line-height:1.6">
+     결제 화면 준비 중<br>
+     <span style="font-size:12px">추후 결제 시스템 연결 예정입니다.</span>
+   </div>
+   <button class="mainbtn" style="margin-top:12px" onclick="startRealPayment(${quantity})">결제 화면으로</button>
+   <button class="mainbtn" style="margin-top:8px;background:#e8ece7;color:#526057" onclick="document.getElementById('reviveArea').innerHTML=''">닫기</button>
+ </div>`;
+}
+
+async function startRealPayment(quantity=1){
+ toast('결제 시스템 연결 후 이용할 수 있어요.');
+}
+async function loginWithGoogle(){
+ const {error}=await supabaseClient.auth.signInWithOAuth({
+  provider:'google',
+  options:{redirectTo:'https://3---mvpv3.vercel.app/'}
+ });
+ if(error) alert('Google 로그인 설정을 확인해주세요.');
+}
+
+async function login(){
+  return loginWithGoogle();
+}
+
+async function logout(){
+  await supabaseClient.auth.signOut();
+  toast('로그아웃되었습니다.');
+}
+
+async function loadAuthState(){
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  updateAuthUI(session);
+  await loadUserGameData(session);
+  supabaseClient.auth.onAuthStateChange(async (_event,session)=>{
+    updateAuthUI(session);
+    await loadUserGameData(session);
+  });
+}
+
+function updateAuthUI(session){
+  const btn=document.getElementById('loginBtn') || document.querySelector('.login');
+  if(!btn) return;
+  if(session?.user){
+    btn.textContent='로그아웃';
+    btn.onclick=logout;
+    btn.title=session.user.email||'로그인됨';
+  }else{
+    btn.textContent='로그인';
+    btn.onclick=loginWithGoogle;
+  }
+}
+
+loadAuthState();
+</script>
+</body>
+</html>
